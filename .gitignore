@@ -1,1 +1,3 @@
 node_modules
+*.mbox
+.DS_Store
