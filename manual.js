@@ -1,7 +1,8 @@
 const MBox = require('node-mbox');
 const MailParser  = require('mailparser').MailParser;
-const process = require('process');
 const devnull = require('dev-null');
+const process = require('process');
+const readline = require('readline');
 
 let allTime = {}; // Key: from sender, value: count
 let recent = {};
@@ -13,17 +14,32 @@ let RECENT_THRESHOLD = Date.now() - 30*24*60*60*1000;
 let NUM_REPORT = 50;
 
 let COMPLETED = false;
-const mbox = new MBox('Inbox.mbox');
-mbox.on('message', onMessage);
-mbox.on('end', () => {
-  COMPLETED = true;
-  report();
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
 });
-mbox.on('error', (e) => {
-  console.log(["Error with MBox parsing", e]);
-  process.exit();
-});
-// READ notion
+
+// ENTRY
+rl.question("Path to mbox file? Default is './Inbox.mbox': ", (file) => {
+  if ((file || '').trim().length == 0) {
+    file = 'Inbox.mbox';
+  }
+  processFile(file);
+})
+
+function processFile(file) {
+  const mbox = new MBox(file);
+  mbox.on('message', onMessage);
+  mbox.on('end', () => {
+    COMPLETED = true;
+    report();
+  });
+  mbox.on('error', (e) => {
+    console.log(["Error with MBox parsing", e]);
+    process.exit();
+  });
+}
 
 function processHeaders(mp) {
   return new Promise((resolve, reject) => {
