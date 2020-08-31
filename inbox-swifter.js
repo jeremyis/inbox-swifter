@@ -211,14 +211,14 @@ function report(completedCb) {
     return vb - va;
   })
 
-  let numRecent = 50;
+  let numRecent = Math.min(50, sortedRecent.length - 1);
   console.log("\n### RECENT (Top " + numRecent + ")");
   for (let i = 0; i <= numRecent; i++) {
     console.log([i, sortedRecent[i], recent[ sortedRecent[i] ] ].join(' '));
   }
 
   console.log("\n### ALL TIME");
-  for (let i = 0; i <= NUM_REPORT; i++) {
+  for (let i = 0; i <= Math.min(NUM_REPORT, sortedAllTime.length - 1); i++) {
     let id = ['#', i, ')'].join('');
     console.log([id, sortedAllTime[i], allTime[ sortedAllTime[i] ] ].join(' '));
   }
@@ -317,10 +317,13 @@ function gmailFilterCommand(sortedEmails, completedCb) {
     console.log(copy);
     console.log(getFilterCommands(ids).join("\n\n\n"));
 
+    /*
+    // There's a bug here but I'm too lazy to find it
     if (excludeList && onlyIds.length > 0) {
       console.log("\n\nAnd if you're curious, here's the command to see your excluded list:\n\n");
       console.log(getFilterCommands(onlyIds).join("\n\n"));
     }
+    */
     completedCb();
   });
 }
