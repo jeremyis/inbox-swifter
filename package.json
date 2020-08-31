@@ -1,0 +1,34 @@
+{
+  "name": "email-swifter",
+  "version": "1.0.0",
+  "description": "Email analytics on Email .MBOX dump files to help you get to Inbox Zero:",
+  "main": "inbox-swifter.js",
+  "dependencies": {
+    "dev-null": "^0.1.1",
+    "lodash": "^4.17.20",
+    "mailparser": "^2.8.1",
+    "node-mbox": "^1.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeremyis/email-analytics.git"
+  },
+  "keywords": [
+    "email",
+    "mbox",
+    "inbox",
+    "zero",
+    "email",
+    "clean"
+  ],
+  "author": "github.com/jeremyis",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jeremyis/email-analytics/issues"
+  },
+  "homepage": "https://github.com/jeremyis/email-analytics#readme"
+}
