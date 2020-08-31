@@ -1,5 +1,5 @@
 # Inbox Swifter
-Email analytics on (.MBOX dump files)[https://en.wikipedia.org/wiki/Mbox] to help you get to Inbox Zero:
+Email analytics on [.MBOX dump files](https://en.wikipedia.org/wiki/Mbox) to help you get to Inbox Zero:
 
 - Produces a histogram bucketed by sender
 - Allows you to omit certain emailers (i.e. so you can manually review their emails)
