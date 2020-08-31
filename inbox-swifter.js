@@ -298,8 +298,7 @@ function makeAndPrintHistogram(counts, sortedKeys) {
 function gmailFilterCommand(sortedEmails, completedCb) {
   let INCLUDE_KEYWORD
   let directions = [
-    "\n\n",
-    'Please indicate which items you\'d like to exclude from the filter statement.',
+    "\n\nPlease indicate which items you'd like to exclude from the filter statement.",
     "If you'd like to supply a list of included items only, put '", INCLUDE_KEYWORD,  "' first.",
     'Separate the list with non-alphanumeric characters. The IDs should be positive integers'
   ].join(' ')
@@ -344,7 +343,7 @@ function gmailFilterCommand(sortedEmails, completedCb) {
     let copy = [
       "Copy and paste the following command(s) into Gmail to search for ",
       "emails in your inbox from these senders.\n",
-      "Note that the emails may be be split into multiple commands as google as a search limit.\n\n\n\n"
+      "Note that the emails may be be split into multiple commands as google has a search limit.\n\n\n\n"
     ].join('')
     console.log(copy);
     console.log(getFilterCommands(ids).join("\n\n\n"));
