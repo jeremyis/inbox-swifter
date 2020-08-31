@@ -23,28 +23,46 @@ const READ_LINE_INTERFACE = readline.createInterface({
 
 startup();
 
+function commandLineInput(text) {
+  return new Promise ((resolve, reject) => {
+    READ_LINE_INTERFACE.question([text, ": "].join(''), (...args) => resolve.apply(null, args));
+  });
+}
 function startup() {
   let args = process.argv.slice(2);
   let file = args.length > 0 ? args[0] : null;
 
+  let msg = [
+    "How many unique senders do you want to limit the analysis to? ",
+    "Default is ",  NUM_REPORT
+  ].join('');
+  let input = commandLineInput(msg)
+    .then( (v) => NUM_REPORT = v == null || v.trim().length == 0 ? NUM_REPORT : parseInt(v.trim()) )
+    .catch( (e) => console.log(e));
+
   if (file) {
-    processFile(file)
+    input
+      .then(() => processFile(file))
+      .catch( (e) => console.log(e));
     return;
   }
-
-  READ_LINE_INTERFACE.question("Path to mbox file? Default is './Inbox.mbox': ", (file) => {
-    if ((file || '').trim().length == 0) {
-      file = 'Inbox.mbox';
-    }
-    processFile(file);
-  })
+  input
+    .then( () => commandLineInput("Path to mbox file? Default is './Inbox.mbox'") )
+    .then( (file) => {
+      if ((file || '').trim().length == 0) {
+        file = 'Inbox.mbox';
+      }
+      processFile(file);
+    })
+    .catch( (e) => console.log(e));
 }
 
 function processFile(file) {
-  console.log(['Processing file ', file, '......'].join(''));
+  console.log(["\n", 'Processing file "', file, '"......'].join(''));
   const mbox = new MBox(file);
   mbox.on('message', onMessage);
   mbox.on('end', () => {
+    console.log("Completed reading file. Processing could still be in progress.");
     COMPLETED = true;
     report(() => process.exit());
   });
@@ -58,7 +76,6 @@ function processHeaders(mp) {
   return new Promise((resolve, reject) => {
     mp.on('headers', function(headers) {
       numProcessed++;
-      report();
       if (numProcessed % 1000 == 0) {
         console.log ([numProcessed, 'processed.', numRead, 'read.'].join(' '));
       }
@@ -73,13 +90,12 @@ function processHeaders(mp) {
       allTime[from]++;
 
       let date = headers.get('date');
-      if (date < RECENT_THRESHOLD) {
-        return;
+      if (date > RECENT_THRESHOLD) {
+        if (!recent[from]) {
+          recent[from] = 0;
+        }
+        recent[from]++;
       }
-      if (!recent[from]) {
-        recent[from] = 0;
-      }
-      recent[from]++;
       /*
       if (!!date && date) {
       }
@@ -99,6 +115,10 @@ function processHeaders(mp) {
       */
       resolve([from, headers.get('subject')]);
     });
+    mp.on('error', (e) => {
+      console.log("ERROR");
+      console.log(e);
+    })
   })
 }
 
@@ -130,36 +150,53 @@ function processAttachment(mp) {
     });
   });
 }
-async function onMessage(msg) {
+function onMessage(msg) {
     numRead++;
     let mp = new MailParser({streamAttachments: true});
+    /*
     let promises = [processHeaders];
     //promises.push(processAttachment);
-    promises.map((x) => x.call(null, mp));
 
     //console.log(['ERROR', headers, attachments]);
+    promises.map((x) => x.call(null, mp));
     Promise.all(promises).then((ps) => {
       //console.log(["### RESULTS"].concat(ps));
+      // 1. confirm size is correct
+      // 2. try to track size by sender
+
+      // Since processing takes time and we're async, we could need to process here;
+      // we've read all messages and the last processing took some time.
+      report(() => process.exit());
     }).catch((error) => {
       console.log(['ERROR', error]);
     });
-    // 1. confirm size is correct
-    // 2. try to track size by sender
+    */
+    processHeaders(mp).then((x) => {
+      report(() => process.exit());
+    }).catch((error) => {
+      console.log(['ERROR processingHeaders', error]);
+    });
     mp.write(msg);
     mp.end();
 };
 
 let reported = false;
-function report(completed) {
+function report(completedCb) {
+  //console.log(['report', numRead, numProcessed, reported, COMPLETED]);
   if (numRead != numProcessed) {
     return;
   }
   if (reported) return;
   if (!COMPLETED) return;
+
+  if (!completedCb) {
+    completedCb = () => {};
+  }
+
   reported = true;
   console.log ([numProcessed, 'processed.', numRead, 'read.'].join(' '));
   if (numProcessed == 0) {
-    completed();
+    completedCb();
     return;
   }
   console.log("Reporting...");
@@ -174,8 +211,9 @@ function report(completed) {
     return vb - va;
   })
 
-  console.log("\n### RECENT");
-  for (let i = 0; i <= NUM_REPORT; i++) {
+  let numRecent = 50;
+  console.log("\n### RECENT (Top " + numRecent + ")");
+  for (let i = 0; i <= numRecent; i++) {
     console.log([i, sortedRecent[i], recent[ sortedRecent[i] ] ].join(' '));
   }
 
@@ -186,13 +224,13 @@ function report(completed) {
   }
   makeAndPrintHistogram(allTime, sortedAllTime);
 
-  gmailFilterCommand();
-  completed();
+  gmailFilterCommand(sortedAllTime, completedCb);
 }
 
 function makeAndPrintHistogram(counts, sortedKeys) {
-  let histogramBoundaries = [0, 10, 20, 50];
+  let histogramBoundaries = [0, 2, 5, 10, 20, 50];
   let histogram = new Array(histogramBoundaries.length).fill(0);
+  let totalEmails = new Array(histogramBoundaries.length).fill(0);
   let minI = histogramBoundaries.length - 1
 
   sortedKeys.forEach((email) => {
@@ -204,36 +242,45 @@ function makeAndPrintHistogram(counts, sortedKeys) {
       min = histogramBoundaries[minI];
     }
     histogram[minI]++;
+    totalEmails[minI] += num;
   });
 
+  let numOfemails = totalEmails.reduce((a, b) =>  a + b, 0);
+  let percentages = totalEmails.map((t) => ((100.0)*t/numOfemails));
+  let percentagesFormatted = percentages.map((n) => [n.toFixed(2), '%'].join(''));
   // Print histogram
+  console.log("\n## Histogram");
+  console.log("Binned by # of emails from this email address");
+  console.log("Values are # of emails in the bin and % of total emails this accounts for");
   let prettyBoundaries = histogramBoundaries.concat(['inf']);
   for (let i = 0; i < prettyBoundaries.length - 1; i++) {
     console.log([
         [prettyBoundaries[i], prettyBoundaries[i+1]].join('-'),
-        ': ',
-        histogram[i]
+        ': ', histogram[i],
+        ' (', percentagesFormatted[i], ')'
       ].join('')
     );
   }
 }
 
-function gmailFilterCommand() {
+function gmailFilterCommand(sortedEmails, completedCb) {
+  let INCLUDE_KEYWORD
   let directions = [
     "\n\n",
     'Please indicate which items you\'d like to exclude from the filter statement.',
-    "If you'd like to supply a list of included items only, put 'include' first.",
-    'Separate the list with non-alphanumeric characters. The IDs should be positive integers: '
+    "If you'd like to supply a list of included items only, put '", INCLUDE_KEYWORD,  "' first.",
+    'Separate the list with non-alphanumeric characters. The IDs should be positive integers'
   ].join(' ')
 
-  READ_LINE_INTERFACE.question(directions, (list) => {
+  commandLineInput(directions).then( (list) => {
     let excludeList = true;
     let onlyIds = [];
     list.split(/[^A-Za-z0-9]/).forEach((val) => {
-      if (_.isString(val) && val.trim() == 'input') {
+      if (_.isString(val) && val.trim() == INCLUDE_KEYWORD) {
         excludeList = false;
         return;
       }
+      val = parseInt(val);
       if (!_.isNumber(val)) {
         console.log(['Warning "', val, '" is not a valid ID'].join(''));
         return;
@@ -242,20 +289,38 @@ function gmailFilterCommand() {
     });
     let ids = onlyIds;
     if (excludeList) {
-      let indices = _.range(0, Math.min(NUM_REPORT + 1, allTime.length));
-      ids = _.indices(indices, onlyIds);
+      let indices = _.range(0, Math.min(NUM_REPORT + 1, sortedEmails.length));
+      ids = _.without(indices, ...onlyIds);
     }
 
-    let fromString = 'from:';
-    let froms = onlyIds.map((x) => sortedAllTime[x]).join(fromString);
-    froms = [fromString, froms].join('');
+    let getFilterCommands = (ids) => {
+      let fromString = 'from:';
+      let froms = ids.map((x) => [ fromString, sortedEmails[x] ].join(''));
 
-    let command = ['in:inbox AND (', froms.join(' OR '), ')'].join('');
+      let length = 30;
+      let results = [];
+      for (let i = 0; i < froms.length; i += length) {
+        let subFroms = froms.slice(i, i + length);
+        results.push(
+          ['in:inbox AND (', fromString, subFroms.join(' OR '), ')'].join('')
+        );
+      }
+
+      return results;
+    };
+
     let copy = [
-      "Copy and paste the following command into Gmail to search for ",
-      "emails in your inbox from these senders"
+      "Copy and paste the following command(s) into Gmail to search for ",
+      "emails in your inbox from these senders.\n",
+      "Note that the emails may be be split into multiple commands as google as a search limit.\n\n\n\n"
     ].join('')
     console.log(copy);
-    console.log(command);
+    console.log(getFilterCommands(ids).join("\n\n\n"));
+
+    if (excludeList && onlyIds.length > 0) {
+      console.log("\n\nAnd if you're curious, here's the command to see your excluded list:\n\n");
+      console.log(getFilterCommands(onlyIds).join("\n\n"));
+    }
+    completedCb();
   });
 }
