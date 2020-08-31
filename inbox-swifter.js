@@ -180,6 +180,31 @@ function onMessage(msg) {
     mp.end();
 };
 
+let FIRST_NAMES = ['tony', 'sacrlett', 'elon', 'bill', 'tom', 'isaac'];
+let LAST_NAMES = ['stark', 'johansson', 'musk', 'gates', 'brady', 'asimov'];
+
+function generateFakeEmail() {
+  return [
+    _.shuffle(FIRST_NAMES)[0],
+    '.',
+    _.shuffle(LAST_NAMES)[0],
+    '@gmail.com'
+  ].join('');
+}
+
+function generateMockCountDict(n=25) {
+  let d = {};
+  for (let i = 0; i <= n; i++) {
+    let e;
+    do {
+      e = generateFakeEmail();
+    } while(d[e]);
+
+    d[e] = Math.floor(Math.random()*100);
+  }
+  return d;
+}
+
 let reported = false;
 function report(completedCb) {
   //console.log(['report', numRead, numProcessed, reported, COMPLETED]);
@@ -192,6 +217,12 @@ function report(completedCb) {
   if (!completedCb) {
     completedCb = () => {};
   }
+
+  // Uncomment to create mock data e.g. for demo images
+  /*
+  allTime = generateMockCountDict(15);
+  recent = generateMockCountDict(5);
+  */
 
   reported = true;
   console.log ([numProcessed, 'processed.', numRead, 'read.'].join(' '));
@@ -211,15 +242,16 @@ function report(completedCb) {
     return vb - va;
   })
 
-  let numRecent = Math.min(50, sortedRecent.length - 1);
-  console.log("\n### RECENT (Top " + numRecent + ")");
+  let numRecent = Math.min(50, sortedRecent.length - 2);
+  console.log("\n### RECENT (Top " + (numRecent + 1) + ")");
   for (let i = 0; i <= numRecent; i++) {
-    console.log([i, sortedRecent[i], recent[ sortedRecent[i] ] ].join(' '));
+    console.log([i + 1, sortedRecent[i], recent[ sortedRecent[i] ] ].join(' '));
   }
 
-  console.log("\n### ALL TIME");
-  for (let i = 0; i <= Math.min(NUM_REPORT, sortedAllTime.length - 1); i++) {
-    let id = ['#', i, ')'].join('');
+  let allTimeAmount = Math.min(NUM_REPORT, sortedAllTime.length - 2)
+  console.log("\n### ALL TIME (Top " + (allTimeAmount + 1) + ")");
+  for (let i = 0; i <= allTimeAmount ; i++) {
+    let id = ['#', i + 1, ')'].join('');
     console.log([id, sortedAllTime[i], allTime[ sortedAllTime[i] ] ].join(' '));
   }
   makeAndPrintHistogram(allTime, sortedAllTime);
