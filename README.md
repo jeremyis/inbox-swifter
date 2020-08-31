@@ -2,11 +2,12 @@
 Email analytics on [.MBOX dump files](https://en.wikipedia.org/wiki/Mbox) to help you get to Inbox Zero without declarig bankruptcy. The idea is
 many unread emails are likely from a long-tail of transactional or promotional senders (think Uber and Amazon receipts or the monthly ad email from the various stores you've shopped at). By performing some lightweight analytics, the tool will spit out some Gmail search queries that you can use to "declare bankruptcy" only on emails like this leaving only the unique messages for you to review. 
 
+More specifically, Inbox Swifter: 
+
 - Produces a histogram bucketed by sender
 - Allows you to omit certain emailers (i.e. so you can manually review their emails)
 - Supplies Gmail-friendly filter commands so you can auto-archive quickly
 - Runs **100% offline so your personal email data never leaves your computer**
-
 
 
 ## To setup:
