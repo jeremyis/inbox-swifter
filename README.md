@@ -6,13 +6,23 @@ Email analytics on [.MBOX dump files](https://en.wikipedia.org/wiki/Mbox) to hel
 - Supplies Gmail-friendly filter commands so you can auto-archive quickly
 - Runs **100% offline so your personal email data never leaves your computer**
 
-You can get an MBox file of your Inbox email using Google Takeout. Be sure to indicate only emails from your inbox:
-https://takeout.google.com/settings/takeout
+
 
 ## To setup:
 $ npm install
 
 ## To run
+
+### Step 1: get a .mbox export 
+You can get an MBox file of your Inbox email using [Google Takeout](https://takeout.google.com/settings/takeout). 
+
+Be sure to indicate **only emails from your inbox** (or whichever set of filters you'd like to clean):
+![Google Takeout Screenshot](https://user-images.githubusercontent.com/184923/91684594-ce35f900-eb0c-11ea-81d8-56d6442efb20.png)
+
+It can take anywhere from several minutes to hours to get your export. Google will email you a link.
+
+### Step 2: run Inbox Swifter!
+For ease of use, put the mbox file in the `inbox-swifter` directory; you can supply a file path so any directory will work.
 $ node inbox-swifter.js
 
 ## In action
