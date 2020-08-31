@@ -1,5 +1,5 @@
 {
-  "name": "email-swifter",
+  "name": "inbox-swifter",
   "version": "1.0.0",
   "description": "Email analytics on Email .MBOX dump files to help you get to Inbox Zero:",
   "main": "inbox-swifter.js",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jeremyis/email-analytics.git"
+    "url": "git+https://github.com/jeremyis/inbox-swifter.git"
   },
   "keywords": [
     "email",
@@ -28,7 +28,7 @@
   "author": "github.com/jeremyis",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/jeremyis/email-analytics/issues"
+    "url": "https://github.com/jeremyis/inbox-swifter/issues"
   },
-  "homepage": "https://github.com/jeremyis/email-analytics#readme"
+  "homepage": "https://github.com/jeremyis/inbox-swifter#readme"
 }
