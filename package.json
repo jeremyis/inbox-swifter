@@ -5,7 +5,7 @@
   "main": "inbox-swifter.js",
   "dependencies": {
     "dev-null": "^0.1.1",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "mailparser": "^2.8.1",
     "node-mbox": "^1.0.0"
   },
